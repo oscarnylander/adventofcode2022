@@ -1,3 +1,5 @@
+use std::collections::BinaryHeap;
+
 use aoc_runner_derive::{aoc, aoc_generator};
 
 #[derive(Default)]
@@ -32,9 +34,25 @@ pub fn solve_part1(input: &[Elf]) -> u32 {
     best
 }
 
+#[aoc(day1, part2)]
+pub fn solve_part2(input: &[Elf]) -> u32 {
+    let mut heap = BinaryHeap::<u32>::new();
+
+    for elf in input {
+        let summed = elf.meals.iter().sum();
+        heap.push(summed);
+    }
+
+    let mut sum = 0;
+    for _ in 0..3 {
+        sum += heap.pop().unwrap();
+    }
+    sum
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{solve_part1, Elf};
+    use super::{solve_part1, solve_part2, Elf};
 
     impl Elf {
         fn new(meals: Vec<u32>) -> Self {
@@ -48,7 +66,34 @@ mod tests {
     #[test]
     fn test1() {
         let expected = 100;
-        let actual = solve_part1(&vec![Elf::from_meals(vec![50]), Elf::from_meals(vec![100])]);
+        let actual = solve_part1(&vec![
+            Elf::from_meals(vec![50]),
+            Elf::from_meals(vec![100]),
+            Elf::from_meals(vec![25]),
+        ]);
+        assert_eq!(expected, actual)
+    }
+
+    #[test]
+    fn test2() {
+        let expected = 175;
+        let actual = solve_part2(&vec![
+            Elf::from_meals(vec![50]),
+            Elf::from_meals(vec![100]),
+            Elf::from_meals(vec![25]),
+        ]);
+        assert_eq!(expected, actual)
+    }
+
+    #[test]
+    fn test3() {
+        let expected = 175;
+        let actual = solve_part2(&vec![
+            Elf::from_meals(vec![50]),
+            Elf::from_meals(vec![100]),
+            Elf::from_meals(vec![25]),
+            Elf::from_meals(vec![5]),
+        ]);
         assert_eq!(expected, actual)
     }
 }

@@ -52,7 +52,7 @@ pub fn solve_part2(input: &[Elf]) -> u32 {
 
 #[cfg(test)]
 mod tests {
-    use super::{solve_part1, solve_part2, Elf};
+    use super::*;
 
     impl Elf {
         fn new(meals: Vec<u32>) -> Self {
@@ -66,7 +66,7 @@ mod tests {
     #[test]
     fn test1() {
         let expected = 100;
-        let actual = solve_part1(&vec![
+        let actual = solve_part1(&[
             Elf::from_meals(vec![50]),
             Elf::from_meals(vec![100]),
             Elf::from_meals(vec![25]),
@@ -77,7 +77,7 @@ mod tests {
     #[test]
     fn test2() {
         let expected = 175;
-        let actual = solve_part2(&vec![
+        let actual = solve_part2(&[
             Elf::from_meals(vec![50]),
             Elf::from_meals(vec![100]),
             Elf::from_meals(vec![25]),
@@ -88,7 +88,7 @@ mod tests {
     #[test]
     fn test3() {
         let expected = 175;
-        let actual = solve_part2(&vec![
+        let actual = solve_part2(&[
             Elf::from_meals(vec![50]),
             Elf::from_meals(vec![100]),
             Elf::from_meals(vec![25]),

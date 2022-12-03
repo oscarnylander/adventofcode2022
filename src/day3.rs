@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use aoc_runner_derive::{aoc, aoc_generator};
+use itertools::Itertools;
 
 #[derive(PartialEq, Debug)]
 pub struct Backpack {
@@ -51,6 +52,49 @@ pub fn solve_part1(input: &[Backpack]) -> u32 {
             }
             for c in b.compartment_two.chars() {
                 if seen_chars.contains(&c) {
+                    return to_priority(c);
+                }
+            }
+            unreachable!()
+        })
+        .sum()
+}
+
+#[aoc(day3, part2)]
+pub fn solve_part2(input: &[Backpack]) -> u32 {
+    input
+        .iter()
+        .chunks(3)
+        .into_iter()
+        .map(|mut chunk| {
+            let first = chunk.next().unwrap();
+            let mut first_chars = HashSet::new();
+            for c in first.compartment_one.chars() {
+                first_chars.insert(c);
+            }
+            for c in first.compartment_two.chars() {
+                first_chars.insert(c);
+            }
+            let second = chunk.next().unwrap();
+            let mut second_chars = HashSet::new();
+            for c in second.compartment_one.chars() {
+                second_chars.insert(c);
+            }
+            for c in second.compartment_two.chars() {
+                second_chars.insert(c);
+            }
+            let intersection = first_chars
+                .intersection(&second_chars)
+                .collect::<HashSet<_>>();
+
+            let third = chunk.next().unwrap();
+            for c in third.compartment_one.chars() {
+                if intersection.contains(&c) {
+                    return to_priority(c);
+                }
+            }
+            for c in third.compartment_two.chars() {
+                if intersection.contains(&c) {
                     return to_priority(c);
                 }
             }
@@ -118,6 +162,14 @@ CrZsJsPPZsGzwwsLwLmpwMDw";
     fn test6() {
         let expected = 26;
         let actual = to_priority('z');
+        assert_eq!(expected, actual)
+    }
+
+    #[test]
+    fn test7() {
+        let expected = 70;
+        let actual = solve_part2(&generate(EXAMPLE));
+
         assert_eq!(expected, actual)
     }
 }

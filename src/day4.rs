@@ -14,6 +14,10 @@ impl Range {
     fn covers(&self, other: &Self) -> bool {
         self.start <= other.start && self.end >= other.end
     }
+
+    fn overlaps(&self, other: &Self) -> bool {
+        self.start <= other.end && other.start <= self.end
+    }
 }
 
 #[aoc_generator(day4)]
@@ -39,6 +43,14 @@ pub fn solve_part1(input: &[(Range, Range)]) -> u32 {
     input
         .iter()
         .filter(|(first, second)| first.covers(second) || second.covers(first))
+        .count() as u32
+}
+
+#[aoc(day4, part2)]
+pub fn solve_part2(input: &[(Range, Range)]) -> u32 {
+    input
+        .iter()
+        .filter(|(first, second)| first.overlaps(second))
         .count() as u32
 }
 
@@ -88,6 +100,14 @@ mod tests {
     fn test4() {
         let expected = 2;
         let actual = solve_part1(&generate(EXAMPLE));
+
+        assert_eq!(expected, actual)
+    }
+
+    #[test]
+    fn test5() {
+        let expected = 4;
+        let actual = solve_part2(&generate(EXAMPLE));
 
         assert_eq!(expected, actual)
     }

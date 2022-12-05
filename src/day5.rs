@@ -102,6 +102,29 @@ pub fn solve_part1(input: &Input) -> String {
     out
 }
 
+#[aoc(day5, part2)]
+pub fn solve_part2(input: &Input) -> String {
+    let mut input = input.clone();
+    for m in &input.moves {
+        let mut from_source_buf = Vec::<char>::default();
+        for _ in 0..m.times {
+            from_source_buf.push(input.stacks.get_mut(&m.source).unwrap().pop().unwrap())
+        }
+        while !from_source_buf.is_empty() {
+            input
+                .stacks
+                .get_mut(&m.destination)
+                .unwrap()
+                .push(from_source_buf.pop().unwrap());
+        }
+    }
+    let mut out = String::new();
+    for (_, stack) in input.stacks.iter().sorted_by_key(|(k, _)| *k) {
+        out.push(*stack.last().unwrap())
+    }
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use maplit::hashmap;
@@ -143,6 +166,14 @@ move 1 from 1 to 2";
     fn test2() {
         let expected = "CMZ".to_string();
         let actual = solve_part1(&generate(EXAMPLE));
+
+        assert_eq!(expected, actual)
+    }
+
+    #[test]
+    fn test3() {
+        let expected = "MCD".to_string();
+        let actual = solve_part2(&generate(EXAMPLE));
 
         assert_eq!(expected, actual)
     }

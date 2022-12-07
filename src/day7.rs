@@ -57,22 +57,14 @@ pub fn generate(input: &str) -> Vec<InputLine> {
         .collect()
 }
 
-#[aoc(day7, part1)]
-pub fn solve_part1(input: &[InputLine]) -> u32 {
-    let mut root = TreeNode::default();
-    parse_subtree(&mut input.iter().skip(1), &mut root);
-    let (_, ret) = dfs(&root);
-    ret
-}
-
-fn dfs(node: &TreeNode) -> (u32, u32) {
+fn dfs_1(node: &TreeNode) -> (u32, u32) {
     if node.children.is_empty() {
         return (node.size, 0);
     }
     let mut child_size_under_threshold = 0;
     let mut size = 0;
     for child in node.children.values() {
-        let (child_size, child_children_under_threshold) = dfs(child);
+        let (child_size, child_children_under_threshold) = dfs_1(child);
         child_size_under_threshold += child_children_under_threshold;
         size += child_size;
     }
@@ -82,6 +74,27 @@ fn dfs(node: &TreeNode) -> (u32, u32) {
             child_size_under_threshold + size
         } else {
             child_size_under_threshold
+        },
+    )
+}
+
+fn dfs_2(current_free_size: u32, node: &TreeNode) -> (u32, u32) {
+    if node.children.is_empty() {
+        return (node.size, u32::MAX);
+    }
+    let mut size = 0;
+    let mut smallest_removal_size = u32::MAX;
+    for child in node.children.values() {
+        let (child_size, smallest_child_removal_size) = dfs_2(current_free_size, child);
+        size += child_size;
+        smallest_removal_size = std::cmp::min(smallest_removal_size, smallest_child_removal_size);
+    }
+    (
+        size,
+        if current_free_size + size >= 30000000 {
+            std::cmp::min(smallest_removal_size, size)
+        } else {
+            smallest_removal_size
         },
     )
 }
@@ -116,6 +129,23 @@ fn parse_subtree(input_stream: &mut dyn Iterator<Item = &InputLine>, root: &mut 
             },
         }
     }
+}
+
+#[aoc(day7, part1)]
+pub fn solve_part1(input: &[InputLine]) -> u32 {
+    let mut root = TreeNode::default();
+    parse_subtree(&mut input.iter().skip(1), &mut root);
+    let (_, ret) = dfs_1(&root);
+    ret
+}
+
+#[aoc(day7, part2)]
+pub fn solve_part2(input: &[InputLine]) -> u32 {
+    let mut root = TreeNode::default();
+    parse_subtree(&mut input.iter().skip(1), &mut root);
+    let (total_size, _) = dfs_1(&root);
+    let (_, ret) = dfs_2(70000000 - total_size, &root);
+    ret
 }
 
 #[cfg(test)]
@@ -183,6 +213,14 @@ $ ls
     fn test2() {
         let expected = 95437;
         let actual = solve_part1(&generate(EXAMPLE));
+
+        assert_eq!(expected, actual)
+    }
+
+    #[test]
+    fn test3() {
+        let expected = 24933642;
+        let actual = solve_part2(&generate(EXAMPLE));
 
         assert_eq!(expected, actual)
     }

@@ -66,6 +66,77 @@ pub fn solve_part1(input: &[Vec<u32>]) -> usize {
     visible.len()
 }
 
+#[aoc(day8, part2)]
+pub fn solve_part2(input: &[Vec<u32>]) -> u32 {
+    let mut ret = 0;
+
+    for x in 0..input.len() {
+        for y in 0..input[0].len() {
+            let view = view_total(input, x, y);
+            if view > ret {
+                ret = view;
+            }
+        }
+    }
+
+    ret
+}
+
+fn view_total(input: &[Vec<u32>], x: usize, y: usize) -> u32 {
+    view_west(input, x, y)
+        * view_north(input, x, y)
+        * view_east(input, x, y)
+        * view_south(input, x, y)
+}
+
+fn view_west(input: &[Vec<u32>], x: usize, y: usize) -> u32 {
+    let mut ret = 0;
+    let elem = input[x][y];
+    for x_ in (0..x).rev() {
+        ret += 1;
+        if elem <= input[x_][y] {
+            break;
+        }
+    }
+    ret
+}
+
+fn view_north(input: &[Vec<u32>], x: usize, y: usize) -> u32 {
+    let mut ret = 0;
+    let elem = input[x][y];
+    for y_ in (0..y).rev() {
+        ret += 1;
+        if elem <= input[x][y_] {
+            break;
+        }
+    }
+    ret
+}
+
+fn view_east(input: &[Vec<u32>], x: usize, y: usize) -> u32 {
+    let mut ret = 0;
+    let elem = input[x][y];
+    for x_ in x + 1..input.len() {
+        ret += 1;
+        if elem <= input[x_][y] {
+            break;
+        }
+    }
+    ret
+}
+
+fn view_south(input: &[Vec<u32>], x: usize, y: usize) -> u32 {
+    let mut ret = 0;
+    let elem = input[x][y];
+    for y_ in (y + 1)..input.len() {
+        ret += 1;
+        if elem <= input[x][y_] {
+            break;
+        }
+    }
+    ret
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -95,6 +166,30 @@ mod tests {
     fn test2() {
         let expected = 21;
         let actual = solve_part1(&generate(EXAMPLE));
+
+        assert_eq!(expected, actual)
+    }
+
+    #[test]
+    fn test3() {
+        let expected = 4;
+        let actual = view_total(&generate(EXAMPLE), 1, 2);
+
+        assert_eq!(expected, actual)
+    }
+
+    #[test]
+    fn test4() {
+        let expected = 8;
+        let actual = view_total(&generate(EXAMPLE), 3, 2);
+
+        assert_eq!(expected, actual)
+    }
+
+    #[test]
+    fn test5() {
+        let expected = 8;
+        let actual = solve_part2(&generate(EXAMPLE));
 
         assert_eq!(expected, actual)
     }

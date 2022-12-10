@@ -75,11 +75,23 @@ pub fn solve_part1(input: &[Instruction]) -> usize {
 }
 
 fn reconcile(prev: &(i32, i32), head: &(i32, i32), tail: &(i32, i32)) -> (i32, i32) {
-    if head.0.abs_diff(tail.0) == 1 && head.1.abs_diff(tail.1) > 1 {
-        return prev.clone();
-    }
-    if head.0.abs_diff(tail.0) > 1 && head.1.abs_diff(tail.1) == 1 {
-        return prev.clone();
+    if (head.0.abs_diff(tail.0) > 1 && head.1.abs_diff(tail.1) == 1)
+        || (head.0.abs_diff(tail.0) == 1 && head.1.abs_diff(tail.1) > 1)
+        || (head.0.abs_diff(tail.0) > 1 && head.1.abs_diff(tail.1) > 1)
+    {
+        if head.0 > tail.0 && head.1 > tail.1 {
+            return (tail.0 + 1, tail.1 + 1);
+        }
+        if head.0 < tail.0 && head.1 < tail.1 {
+            return (tail.0 - 1, tail.1 - 1);
+        }
+        if head.0 > tail.0 && head.1 < tail.1 {
+            return (tail.0 + 1, tail.1 - 1);
+        }
+        if head.0 < tail.0 && head.1 > tail.1 {
+            return (tail.0 - 1, tail.1 + 1);
+        }
+        unreachable!()
     }
     if head.0.abs_diff(tail.0) > 1 {
         return (prev.0, tail.1);
@@ -88,6 +100,39 @@ fn reconcile(prev: &(i32, i32), head: &(i32, i32), tail: &(i32, i32)) -> (i32, i
         return (tail.0, prev.1);
     }
     tail.clone()
+}
+
+#[aoc(day9, part2)]
+pub fn solve_part2(input: &[Instruction]) -> usize {
+    let mut visited = HashSet::<(i32, i32)>::default();
+
+    visited.insert((0, 0));
+
+    let mut knots = vec![(0, 0); 10];
+
+    for instruction in input {
+        for _ in 0..instruction.steps {
+            let mut prev = knots[0].clone();
+            knots[0] = match instruction.direction {
+                Direction::Left => (prev.0 - 1, prev.1),
+                Direction::Up => (prev.0, prev.1 + 1),
+                Direction::Right => (prev.0 + 1, prev.1),
+                Direction::Down => (prev.0, prev.1 - 1),
+            };
+
+            for idx in 1..knots.len() {
+                let knot = knots[idx];
+                let new = reconcile(&prev, &knots[idx - 1], &knot);
+                prev = knot;
+                knots[idx] = new;
+                if idx == knots.len() - 1 {
+                    visited.insert(new);
+                }
+            }
+        }
+    }
+
+    visited.len()
 }
 
 #[cfg(test)]
@@ -102,6 +147,15 @@ R 4
 D 1
 L 5
 R 2";
+
+    static EXAMPLE2: &str = "R 5
+U 8
+L 8
+D 3
+R 17
+D 10
+L 25
+U 20";
 
     #[test]
     fn test1() {
@@ -157,6 +211,22 @@ R 2";
     fn test6() {
         let expected = (2, 2);
         let actual = reconcile(&(2, 2), &(3, 2), &(1, 3));
+
+        assert_eq!(expected, actual)
+    }
+
+    #[test]
+    fn test7() {
+        let expected = 1;
+        let actual = solve_part2(&generate(EXAMPLE));
+
+        assert_eq!(expected, actual)
+    }
+
+    #[test]
+    fn test8() {
+        let expected = 36;
+        let actual = solve_part2(&generate(EXAMPLE2));
 
         assert_eq!(expected, actual)
     }

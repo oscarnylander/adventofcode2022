@@ -11,7 +11,21 @@ struct CPU {
     x: i32,
     program: Vec<Instruction>,
     cursor: usize,
-    busy: bool,
+    currently_executing: Option<ExecutingInstruction>,
+}
+
+struct ExecutingInstruction {
+    instruction: Instruction,
+    cycles: u32,
+}
+
+impl ExecutingInstruction {
+    fn new(instruction: &Instruction) -> Self {
+        Self {
+            instruction: instruction.clone(),
+            cycles: 0,
+        }
+    }
 }
 
 impl CPU {
@@ -21,31 +35,44 @@ impl CPU {
             x: 1,
             program: program.to_vec(),
             cursor: 0,
-            busy: false,
+            currently_executing: Option::None,
         }
     }
 
-    fn run_cycle(&mut self) {
-        match self.program[self.cursor] {
+    fn begin_cycle(&mut self) {
+        if self.currently_executing.is_none() {
+            self.currently_executing = Some(ExecutingInstruction::new(&self.program[self.cursor]));
+            self.cursor += 1;
+        }
+    }
+
+    fn end_cycle(&mut self) {
+        let mut currently_executing = self.currently_executing.as_mut().unwrap();
+        currently_executing.cycles += 1;
+        match currently_executing.instruction {
             Instruction::Addx(value) => {
-                if self.busy {
-                    self.busy = false;
-                    self.cursor += 1;
+                if currently_executing.cycles == 2 {
                     self.x += value;
-                } else {
-                    self.busy = true;
+                    self.currently_executing = None;
                 }
             }
             Instruction::Noop => {
-                self.cursor += 1;
+                self.currently_executing = Option::None;
             }
         }
-
-        self.tick += 1
+        self.tick += 1;
     }
 
     fn signal_strength(&self) -> i32 {
         self.x * self.tick as i32
+    }
+
+    fn pixel(&self) -> char {
+        if self.x.abs_diff(((self.tick - 1) % 40) as i32) < 2 {
+            '#'
+        } else {
+            '.'
+        }
     }
 }
 
@@ -72,20 +99,41 @@ pub fn solve_part1(input: &[Instruction]) -> i32 {
     let mut ret = 0;
 
     for _ in 0..19 {
-        cpu.run_cycle();
+        cpu.begin_cycle();
+        cpu.end_cycle();
     }
 
+    cpu.begin_cycle();
     ret += cpu.signal_strength();
-    cpu.run_cycle();
+    cpu.end_cycle();
 
     for _ in 0..5 {
         for _ in 0..39 {
-            cpu.run_cycle();
+            cpu.begin_cycle();
+            cpu.end_cycle();
         }
+        cpu.begin_cycle();
         ret += cpu.signal_strength();
-        cpu.run_cycle();
+        cpu.end_cycle();
     }
     ret
+}
+
+#[aoc(day10, part2)]
+pub fn solve_part2(input: &[Instruction]) -> String {
+    let mut cpu = CPU::new(input);
+
+    let mut out = String::new();
+
+    for _ in 0..6 {
+        for _ in 0..40 {
+            cpu.begin_cycle();
+            out.push(cpu.pixel());
+            cpu.end_cycle();
+        }
+        out.push('\n');
+    }
+    out
 }
 
 #[cfg(test)]
@@ -267,26 +315,92 @@ noop";
     fn test3() {
         let mut cpu = CPU::new(&generate(EXAMPLE1));
 
+        cpu.begin_cycle();
         assert_eq!(cpu.tick, 1);
         assert_eq!(cpu.x, 1);
+        cpu.end_cycle();
 
-        cpu.run_cycle();
+        cpu.begin_cycle();
         assert_eq!(cpu.tick, 2);
+        cpu.end_cycle();
 
-        cpu.run_cycle();
+        cpu.begin_cycle();
         assert_eq!(cpu.x, 1);
         assert_eq!(cpu.tick, 3);
+        cpu.end_cycle();
 
-        cpu.run_cycle();
+        cpu.begin_cycle();
         assert_eq!(cpu.x, 4);
         assert_eq!(cpu.tick, 4);
+        cpu.end_cycle();
 
-        cpu.run_cycle();
+        cpu.begin_cycle();
         assert_eq!(cpu.x, 4);
         assert_eq!(cpu.tick, 5);
+        cpu.end_cycle();
 
-        cpu.run_cycle();
         assert_eq!(cpu.x, -1);
         assert_eq!(cpu.tick, 6);
+    }
+
+    #[test]
+    fn test4() {
+        let expected = "##..##..##..##..##..##..##..##..##..##..
+###...###...###...###...###...###...###.
+####....####....####....####....####....
+#####.....#####.....#####.....#####.....
+######......######......######......####
+#######.......#######.......#######.....
+"
+        .to_string();
+
+        let actual = solve_part2(&generate(EXAMPLE2));
+
+        assert_eq!(expected, actual)
+    }
+
+    #[test]
+    fn test5() {
+        let mut cpu = CPU::new(&generate(EXAMPLE2));
+
+        cpu.begin_cycle();
+        assert_eq!(cpu.pixel(), '#');
+        cpu.end_cycle();
+
+        cpu.begin_cycle();
+        assert_eq!(cpu.pixel(), '#');
+        cpu.end_cycle();
+
+        cpu.begin_cycle();
+        assert_eq!(cpu.pixel(), '.');
+        cpu.end_cycle();
+
+        cpu.begin_cycle();
+        assert_eq!(cpu.pixel(), '.');
+        cpu.end_cycle();
+
+        cpu.begin_cycle();
+        assert_eq!(cpu.pixel(), '#');
+        cpu.end_cycle();
+
+        cpu.begin_cycle();
+        assert_eq!(cpu.pixel(), '#');
+        cpu.end_cycle();
+
+        cpu.begin_cycle();
+        assert_eq!(cpu.pixel(), '.');
+        cpu.end_cycle();
+
+        cpu.begin_cycle();
+        assert_eq!(cpu.pixel(), '.');
+        cpu.end_cycle();
+
+        cpu.begin_cycle();
+        assert_eq!(cpu.pixel(), '#');
+        cpu.end_cycle();
+
+        cpu.begin_cycle();
+        assert_eq!(cpu.pixel(), '#');
+        cpu.end_cycle();
     }
 }

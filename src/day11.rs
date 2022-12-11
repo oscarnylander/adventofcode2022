@@ -121,8 +121,9 @@ pub fn generate(input: &str) -> Vec<Monkey> {
         .collect()
 }
 
-fn run_round(monkeys: &mut [Monkey]) -> Vec<u64> {
+fn run_round(monkeys: &mut [Monkey], with_div: bool) -> Vec<u64> {
     let mut inspects = vec![0; monkeys.len()];
+    let common = monkeys.iter().map(|m| m.divisor).product::<u64>();
     for idx in 0..monkeys.len() {
         let monkey = monkeys.get_mut(idx).unwrap();
         let mut to_send = Vec::<(usize, u64)>::default();
@@ -133,7 +134,7 @@ fn run_round(monkeys: &mut [Monkey]) -> Vec<u64> {
             }
             inspects[idx] = inspects[idx] + 1;
             let item = monkey.operation.execute(item.unwrap());
-            let item = item / 3;
+            let item = if with_div { item / 3 } else { item % common };
             let test_succeeded = item % monkey.divisor == 0;
             let receiver = if test_succeeded {
                 monkey.on_true
@@ -155,7 +156,22 @@ pub fn solve_part1(input: &[Monkey]) -> u64 {
     let mut inspects = vec![0; monkeys.len()];
 
     for _ in 0..20 {
-        let round_inspects = run_round(&mut monkeys);
+        let round_inspects = run_round(&mut monkeys, true);
+        for idx in 0..inspects.len() {
+            inspects[idx] = inspects[idx] + round_inspects[idx];
+        }
+    }
+
+    inspects.iter().sorted().rev().take(2).product()
+}
+
+#[aoc(day11, part2)]
+pub fn solve_part2(input: &[Monkey]) -> u64 {
+    let mut monkeys = input.to_vec();
+    let mut inspects = vec![0; monkeys.len()];
+
+    for round in 0..10000 {
+        let round_inspects = run_round(&mut monkeys, false);
         for idx in 0..inspects.len() {
             inspects[idx] = inspects[idx] + round_inspects[idx];
         }
@@ -212,7 +228,7 @@ Monkey 3:
     #[test]
     fn test2() {
         let mut monkeys = generate(EXAMPLE);
-        let inspects = run_round(&mut monkeys);
+        let inspects = run_round(&mut monkeys, true);
 
         assert_eq!(VecDeque::from(vec![20, 23, 27, 26]), monkeys[0].items);
         assert_eq!(
@@ -230,5 +246,21 @@ Monkey 3:
         let actual = solve_part1(&generate(EXAMPLE));
 
         assert_eq!(expected, actual)
+    }
+
+    #[test]
+    fn test4() {
+        let expected = 2713310158;
+        let actual = solve_part2(&generate(EXAMPLE));
+
+        assert_eq!(expected, actual)
+    }
+
+    #[test]
+    fn test5() {
+        let mut monkeys = generate(EXAMPLE);
+        let inspects = run_round(&mut monkeys, false);
+
+        assert_eq!(vec![2, 4, 3, 6], inspects);
     }
 }
